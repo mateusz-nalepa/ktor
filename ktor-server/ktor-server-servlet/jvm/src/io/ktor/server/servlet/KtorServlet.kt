@@ -8,6 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.util.*
 import io.ktor.util.*
+import io.ktor.util.Logger
 import io.ktor.util.cio.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.*
@@ -50,10 +51,10 @@ public abstract class KtorServlet : HttpServlet(), CoroutineScope {
      */
     protected abstract val upgrade: ServletUpgrade
 
-    override val coroutineContext: CoroutineContext =
-        Dispatchers.Unconfined + SupervisorJob() +
-            CoroutineName("servlet") +
-            DefaultUncaughtExceptionHandler { logger }
+    override val coroutineContext: CoroutineContext = Dispatchers.Unconfined +
+        SupervisorJob() +
+        CoroutineName("servlet") +
+        DefaultUncaughtExceptionHandler { logger }
 
     /**
      * Called by the servlet container when loading the servlet (on load)
@@ -163,23 +164,6 @@ public val ServletContextAttribute: AttributeKey<ServletContext> = AttributeKey(
 
 @OptIn(InternalAPI::class)
 private class AsyncDispatchers {
-    val engineExecutor = ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors())
-    val engineDispatcher = DispatcherWithShutdown(engineExecutor.asCoroutineDispatcher())
-
-    val executor = ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 8)
-    val dispatcher = DispatcherWithShutdown(executor.asCoroutineDispatcher())
-
-    fun destroy() {
-        engineDispatcher.prepareShutdown()
-        dispatcher.prepareShutdown()
-        try {
-            executor.shutdownNow()
-            engineExecutor.shutdown()
-            executor.awaitTermination(1L, TimeUnit.SECONDS)
-            engineExecutor.awaitTermination(1L, TimeUnit.SECONDS)
-        } finally {
-            engineDispatcher.completeShutdown()
-            dispatcher.completeShutdown()
-        }
-    }
+    val engineDispatcher = Dispatchers.IO
+    val dispatcher = Dispatchers.IO
 }

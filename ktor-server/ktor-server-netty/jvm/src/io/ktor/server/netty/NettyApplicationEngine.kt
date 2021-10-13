@@ -123,12 +123,12 @@ public class NettyApplicationEngine(
         }
     }
 
-    private val dispatcherWithShutdown: DispatcherWithShutdown by lazy {
-        DispatcherWithShutdown(NettyDispatcher)
+    private val nettyDispatcher: CoroutineDispatcher by lazy {
+        NettyDispatcher
     }
 
-    private val engineDispatcherWithShutdown by lazy {
-        DispatcherWithShutdown(workerEventGroup.asCoroutineDispatcher())
+    private val workerDispatcher by lazy {
+        workerEventGroup.asCoroutineDispatcher()
     }
 
     private var cancellationDeferred: CompletableJob? = null
@@ -153,8 +153,8 @@ public class NettyApplicationEngine(
                     pipeline,
                     environment,
                     callEventGroup,
-                    engineDispatcherWithShutdown,
-                    environment.parentCoroutineContext + dispatcherWithShutdown,
+                    workerDispatcher,
+                    environment.parentCoroutineContext + nettyDispatcher,
                     connector,
                     configuration.requestQueueLimit,
                     configuration.runningLimit,
@@ -210,8 +210,6 @@ public class NettyApplicationEngine(
         environment.monitor.raise(ApplicationStopPreparing, environment)
         val channelFutures = channels?.mapNotNull { if (it.isOpen) it.close() else null }.orEmpty()
 
-        dispatcherWithShutdown.prepareShutdown()
-        engineDispatcherWithShutdown.prepareShutdown()
         try {
             val shutdownConnections =
                 connectionEventGroup.shutdownGracefully(gracePeriodMillis, timeoutMillis, TimeUnit.MILLISECONDS)
@@ -230,9 +228,6 @@ public class NettyApplicationEngine(
 
             environment.stop()
         } finally {
-            dispatcherWithShutdown.completeShutdown()
-            engineDispatcherWithShutdown.completeShutdown()
-
             channelFutures.forEach { it.sync() }
         }
     }

@@ -2,9 +2,8 @@
 
 package io.ktor.utils.io.streams
 
-import io.ktor.utils.io.bits.Memory
+import io.ktor.utils.io.bits.*
 import io.ktor.utils.io.core.*
-import io.ktor.utils.io.internal.utils.*
 import kotlinx.cinterop.*
 import platform.posix.*
 
@@ -61,31 +60,6 @@ public fun write(fildes: Int, source: Memory, offset: Int, length: Int): Int {
 public fun write(fildes: Int, source: Memory, offset: Long, length: Long): Long {
     val maxLength = minOf<Long>(length, ssize_t.MAX_VALUE.convert())
     return write(fildes, source.pointer + offset, maxLength.convert()).convert()
-}
-
-public fun send(socket: KX_SOCKET, buffer: Buffer, flags: Int): ssize_t {
-    var written: ssize_t
-
-    buffer.readDirect { pointer ->
-        val result = send(socket, pointer, buffer.readRemaining.convert(), flags)
-        written = result.convert()
-
-        // it is completely safe to convert since the returned value will be never greater than Int.MAX_VALUE
-        // however the returned value could be -1 so clamp it
-        result.convert<Int>().coerceAtLeast(0)
-    }
-
-    return written
-}
-
-public fun send(socket: KX_SOCKET, source: Memory, sourceOffset: Long, maxLength: Long, flags: Int): Long {
-    val pointer = source.pointer + sourceOffset
-
-    return send(socket, pointer, maxLength.coerceAtMost(size_t.MAX_VALUE.toLong()).convert(), flags).convert()
-}
-
-public fun send(socket: KX_SOCKET, source: Memory, sourceOffset: Int, maxLength: Int, flags: Int): Int {
-    return send(socket, source, sourceOffset.toLong(), maxLength.toLong(), flags).toInt()
 }
 
 public fun fread(buffer: Buffer, stream: CPointer<FILE>): size_t {
@@ -148,61 +122,4 @@ public fun read(fildes: Int, destination: Memory, offset: Long, length: Long): L
     )
 
     return read(fildes, destination.pointer + offset, maxLength.convert()).convert<Long>().coerceAtLeast(0)
-}
-
-public fun recv(socket: KX_SOCKET, buffer: Buffer, flags: Int): ssize_t {
-    var bytesRead: ssize_t
-
-    buffer.writeDirect { pointer ->
-        val result = recv(socket, pointer, buffer.writeRemaining.convert(), flags)
-        bytesRead = result.convert()
-
-        // it is completely safe to convert since the returned value will be never greater than Int.MAX_VALUE
-        // however the returned value could be -1 so clamp it
-        result.convert<Int>().coerceAtLeast(0)
-    }
-
-    return bytesRead
-}
-
-public fun recvfrom(
-    socket: KX_SOCKET,
-    buffer: Buffer,
-    flags: Int,
-    addr: CValuesRef<sockaddr>,
-    addr_len: CValuesRef<KX_SOCKADDR_LENVar>
-): ssize_t {
-    var bytesRead: ssize_t
-
-    buffer.writeDirect { pointer ->
-        val result = recvfrom(socket, pointer, buffer.writeRemaining.convert(), flags, addr, addr_len)
-        bytesRead = result.convert()
-
-        // it is completely safe to convert since the returned value will be never greater than Int.MAX_VALUE
-        // however the returned value could be -1 so clamp it
-        result.convert<Int>().coerceAtLeast(0)
-    }
-
-    return bytesRead
-}
-
-public fun sendto(
-    socket: KX_SOCKET,
-    buffer: Buffer,
-    flags: Int,
-    addr: CValuesRef<sockaddr>,
-    addr_len: KX_SOCKADDR_LEN
-): ssize_t {
-    var written: ssize_t
-
-    buffer.readDirect { pointer ->
-        val result = sendto(socket, pointer, buffer.readRemaining.convert(), flags, addr, addr_len)
-        written = result.convert()
-
-        // it is completely safe to convert since the returned value will be never greater than Int.MAX_VALUE
-        // however the returned value could be -1 so clamp it
-        result.convert<Int>().coerceAtLeast(0)
-    }
-
-    return written
 }

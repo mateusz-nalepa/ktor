@@ -17,10 +17,10 @@ fun Project.configureTargets() {
     val hasJvmAndNix = hasCommon || files.any { it.name == "jvmAndNix" }
     val hasPosix = hasCommon || files.any { it.name == "posix" }
     val hasDesktop = hasPosix || files.any { it.name == "desktop" }
-    val hasNix = hasPosix || files.any { it.name == "nix" }
+    val hasNix = hasPosix || hasJvmAndNix || files.any { it.name == "nix" }
     val hasDarwin = hasNix || files.any { it.name == "darwin" }
     val hasJs = hasCommon || files.any { it.name == "js" }
-    val hasJvm = hasCommon || files.any { it.name == "jvm" }
+    val hasJvm = hasCommon || hasJvmAndNix || files.any { it.name == "jvm" }
 
     kotlin {
         if (hasJvm) {
