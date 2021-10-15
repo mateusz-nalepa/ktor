@@ -76,7 +76,7 @@ class ApplicationPluginTest {
             onCallRespond { call ->
                 val data = call.attributes.getOrNull(key)
                 if (data != null) {
-                    transformResponseBody {
+                    transformBody {
                         data
                     }
                 }
@@ -118,7 +118,7 @@ class ApplicationPluginTest {
             onCallRespond { call ->
                 val data = call.attributes.getOrNull(FConfig.Key)
                 if (data != null) {
-                    transformResponseBody { data }
+                    transformBody { data }
                 }
             }
         }
@@ -358,7 +358,7 @@ class ApplicationPluginTest {
             onCallRespond { call ->
                 val data = call.attributes.getOrNull(FConfig.Key)
                 if (data != null) {
-                    transformResponseBody { data }
+                    transformBody { data }
                 }
             }
         }
@@ -408,7 +408,7 @@ class ApplicationPluginTest {
             onCallRespond { call ->
                 val data = call.attributes.getOrNull(FConfig.Key)
                 if (data != null) {
-                    transformResponseBody { data }
+                    transformBody { data }
                 }
             }
         }
@@ -450,5 +450,41 @@ class ApplicationPluginTest {
 
         assertWithPlugin(expectedResponse = "response", data = null)
         assertWithPlugin(expectedResponse = "custom data", data = "custom data")
+    }
+
+    @Test
+    fun `test transformRequestBody`() {
+        class MyInt(val x: Int)
+
+        val plugin = createApplicationPlugin("F") {
+            onCallReceive { _ ->
+                transformBody { data ->
+                    if (requestedType?.type == MyInt::class)
+                        MyInt(data.readInt())
+                    else
+                        data
+                }
+            }
+        }
+
+        fun assertWithPlugin(expectedResponse: Int) = withTestApplication {
+            application.install(plugin)
+
+            application.routing {
+                post("/receive") {
+                    val data = call.receive<MyInt>()
+                    call.respond(data.x)
+                }
+            }
+
+            handleRequest(HttpMethod.Post, "/receive") {
+                setBody(100500.toString().toByteArray())
+            }.let { call ->
+                val content = call.response.content?.toInt()
+                assertEquals(expectedResponse, content)
+            }
+        }
+
+        assertWithPlugin(expectedResponse = 100500)
     }
 }
