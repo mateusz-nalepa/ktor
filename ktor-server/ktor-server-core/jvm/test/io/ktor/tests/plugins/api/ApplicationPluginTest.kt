@@ -453,7 +453,7 @@ class ApplicationPluginTest {
     }
 
     @Test
-    fun `test transformRequestBody`() {
+    fun testTransformRequestBody() {
         class MyInt(val x: Int)
 
         val plugin = createApplicationPlugin("F") {
