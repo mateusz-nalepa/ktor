@@ -10,10 +10,14 @@ kotlin.sourceSets {
     }
     val jvmAndNixTest by getting {
         dependencies {
-            api(project(":ktor-server:ktor-server-test-host"))
-            api(project(":ktor-server:ktor-server-test-suites"))
             api(project(":ktor-server:ktor-server-core"))
             api(project(":ktor-client:ktor-client-cio"))
+        }
+    }
+    val jvmTest by getting {
+        dependencies {
+            api(project(":ktor-server:ktor-server-test-host"))
+            api(project(":ktor-server:ktor-server-test-suites"))
         }
     }
 }

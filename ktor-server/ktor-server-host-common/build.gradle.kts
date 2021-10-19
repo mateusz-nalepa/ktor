@@ -8,7 +8,7 @@ kotlin.sourceSets {
         }
     }
 
-    val jvmAndNixTest by getting {
+    val jvmTest by getting {
         dependencies {
             implementation(project(":ktor-server:ktor-server-test-host"))
         }

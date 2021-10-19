@@ -38,12 +38,12 @@ kotlin.sourceSets {
         dependencies {
             api(project(":ktor-http:ktor-http-cio"))
             api(project(":ktor-network"))
-            api(project(":ktor-server:ktor-server-test-host"))
         }
     }
 
     val jvmTest by getting {
         dependencies {
+            api(project(":ktor-server:ktor-server-test-host"))
             implementation("io.mockk:mockk:$mockk_version")
         }
     }
